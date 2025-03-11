@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termin Buchen - Andriana Delcheva</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-bg: #c6f6d5;
+            --success-text: #2f855a;
+            --error-bg: #fed7d7;
+            --error-text: #e53e3e;
+            --warning-bg: #feebc8;
+            --warning-text: #c05621;
+            --info-bg: #bee3f8;
+            --info-text: #2b6cb0;
+            --border-color: #ddd;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+        
+        .booking-form {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button[disabled] {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        
+        button:hover:not([disabled]) {
+            background-color: var(--primary-hover);
+        }
+        
+        .button-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        button.loading .button-spinner {
+            display: inline-block;
+        }
+        
+        .error {
+            color: var(--error-text);
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background-color: var(--success-bg);
+            color: var(--success-text);
+        }
+        
+        .error-message {
+            background-color: var(--error-bg);
+            color: var(--error-text);
+        }
+        
+        .warning {
+            background-color: var(--warning-bg);
+            color: var(--warning-text);
+        }
+        
+        .info {
+            background-color: var(--info-bg);
+            color: var(--info-text);
+        }
+        
+        .loading-overlay {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .loading-overlay.visible {
+            display: block;
+        }
+        
+        .stepper {
+            display: flex;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            position: relative;
+            min-width: 120px;
+        }
+        
+        .step::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -15px;
+            width: 30px;
+            height: 2px;
+            background-color: var(--border-color);
+            z-index: 1;
+        }
+        
+        .step:last-child::after {
+            display: none;
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .step.active .step-number {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background-color: var(--success-text);
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .step-content {
+            display: none;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        .step-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .service-option {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .service-option:hover {
+            border-color: #cbd5e0;
+            background-color: #f7fafc;
+        }
+        
+        .service-option.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        
+        .service-radio {
+            margin-right: 10px;
+        }
+        
+        .service-info {
+            flex: 1;
+        }
+        
+        .service-name {
+            font-weight: 500;
+        }
+        
+        .service-details {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .service-price {
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        .time-slots {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .time-slot {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .time-slot:hover {
+            border-color: #cbd5e0;
+            background-color: #f7fafc;
+        }
+        
+        .time-slot.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        
+        .time-slot.unavailable {
+            opacity: 0.5;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+        
+        @media (max-width: 640px) {
+            .stepper {
+                flex-direction: column;
+                margin-bottom: 10px;
+            }
+            
+            .step {
+                text-align: left;
+                display: flex;
+                align-items: center;
+                margin-bottom: 5px;
+            }
+            
+            .step::after {
+                top: auto;
+                right: auto;
+                bottom: -10px;
+                left: 15px;
+                width: 2px;
+                height: 15px;
+            }
+            
+            .step-number {
+                margin-bottom: 0;
+                margin-right: 10px;
+            }
+            
+            .time-slots {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Termin Buchen</h1>
+        
+        <div id="error-message" class="message error-message" style="display: none;"></div>
+        <div id="info-message" class="message info" style="display: none;"></div>
+        
+        <div id="success-message" class="message success" style="display: none;">
+            <h2>Booking Confirmation</h2>
+            <p>Ihr Termin wurde erfolgreich gebucht! Sie erhalten in Kürze eine Bestätigungs-E-Mail.</p>
+            <p><strong>Termin-Details:</strong></p>
+            <div id="booking-details"></div>
+        </div>
+        
+        <div id="booking-process">
+            <div class="stepper">
+                <div class="step active" id="step-1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Datum & Dienstleistung</div>
+                </div>
+                <div class="step" id="step-2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Uhrzeit</div>
+                </div>
+                <div class="step" id="step-3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Persönliche Daten</div>
+                </div>
+                <div class="step" id="step-4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Bestätigung</div>
+                </div>
+            </div>
+            
+            <div class="booking-form">
+                <!-- Step 1: Date and Service -->
+                <div class="step-content active" id="step-1-content">
+                    <div class="form-group">
+                        <label for="date">Datum</label>
+                        <input type="date" id="date" name="date" required>
+                        <div id="date-error" class="error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Dienstleistung</label>
+                        <div id="services-container">
+                            <div class="service-option" data-service="Massage" data-duration="60" data-price="80">
+                                <input type="radio" name="service" id="service-1" class="service-radio" value="Massage">
+                                <div class="service-info">
+                                    <div class="service-name">Massage</div>
+                                    <div class="service-details">Dauer: 60 Min</div>
+                                </div>
+                                <div class="service-price">80 €</div>
+                            </div>
+                            
+                            <div class="service-option" data-service="Gesichtsbehandlung" data-duration="45" data-price="65">
+                                <input type="radio" name="service" id="service-2" class="service-radio" value="Gesichtsbehandlung">
+                                <div class="service-info">
+                                    <div class="service-name">Gesichtsbehandlung</div>
+                                    <div class="service-details">Dauer: 45 Min</div>
+                                </div>
+                                <div class="service-price">65 €</div>
+                            </div>
+                            
+                            <div class="service-option" data-service="Maniküre" data-duration="30" data-price="40">
+                                <input type="radio" name="service" id="service-3" class="service-radio" value="Maniküre">
+                                <div class="service-info">
+                                    <div class="service-name">Maniküre</div>
+                                    <div class="service-details">Dauer: 30 Min</div>
+                                </div>
+                                <div class="service-price">40 €</div>
+                            </div>
+                        </div>
+                        <div id="services-error" class="error"></div>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <div></div>
+                        <button type="button" id="step-1-next">
+                            <span class="button-spinner"></span>
+                            Weiter
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Time Slots -->
+                <div class="step-content" id="step-2-content">
+                    <div class="form-group">
+                        <label>Verfügbare Uhrzeiten</label>
+                        <div id="time-slots" class="time-slots">
+                            <div class="loading-overlay visible">Lade Verfügbarkeiten...</div>
+                        </div>
+                        <div id="time-error" class="error"></div>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button type="button" id="step-2-prev">Zurück</button>
+                        <button type="button" id="step-2-next">
+                            <span class="button-spinner"></span>
+                            Weiter
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Personal Details -->
+                <div class="step-content" id="step-3-content">
+                    <div class="form-group">
+                        <label for="name">Name</label>
+                        <input type="text" id="name" name="name" required>
+                        <div id="name-error" class="error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">E-Mail</label>
+                        <input type="email" id="email" name="email" required>
+                        <div id="email-error" class="error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Telefon</label>
+                        <input type="tel" id="phone" name="phone" required>
+                        <div id="phone-error" class="error"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Anmerkungen (optional)</label>
+                        <textarea id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button type="button" id="step-3-prev">Zurück</button>
+                        <button type="button" id="step-3-next">
+                            <span class="button-spinner"></span>
+                            Weiter
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Confirmation -->
+                <div class="step-content" id="step-4-content">
+                    <h2>Zusammenfassung</h2>
+                    
+                    <div id="booking-summary">
+                        <!-- Will be filled dynamically -->
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="agreed" name="agreed" required>
+                            Ich stimme der Verarbeitung meiner personenbezogenen Daten zu Zwecken der Terminbuchung zu.
+                        </label>
+                        <div id="agreed-error" class="error"></div>
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button type="button" id="step-4-prev">Zurück</button>
+                        <button type="button" id="book-appointment">
+                            <span class="button-spinner"></span>
+                            Termin buchen
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const dateInput = document.getElementById('date');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+            const notesTextarea = document.getElementById('notes');
+            const agreedCheckbox = document.getElementById('agreed');
+            const errorMessage = document.getElementById('error-message');
+            const infoMessage = document.getElementById('info-message');
+            const successMessage = document.getElementById('success-message');
+            const bookingProcess = document.getElementById('booking-process');
+            const bookingDetails = document.getElementById('booking-details');
+            const bookingSummary = document.getElementById('booking-summary');
+            
+            // API endpoints
+            const API_BASE_URL = 'https://booking-api.konstantindelchevsw.workers.dev';
+            
+            // Set minimum date to today
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            const formattedToday = `${yyyy}-${mm}-${dd}`;
+            dateInput.min = formattedToday;
+            
+            // Booking data object
+            let bookingData = {
+                date: '',
+                time: '',
+                services: [],
+                name: '',
+                email: '',
+                phone: '',
+                notes: '',
+                agreed: false
+            };
+            
+            // Service options click handler
+            const serviceOptions = document.querySelectorAll('.service-option');
+            serviceOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const radio = this.querySelector('.service-radio');
+                    radio.checked = true;
+                    
+                    // Remove selected class from all options
+                    serviceOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                });
+            });
+            
+            // Step navigation
+            const steps = document.querySelectorAll('.step');
+            const stepContents = document.querySelectorAll('.step-content');
+            
+            function goToStep(stepNumber) {
+                // Hide all steps and contents
+                steps.forEach(step => step.classList.remove('active'));
+                stepContents.forEach(content => content.classList.remove('active'));
+                
+                // Mark previous steps as completed
+                for (let i = 1; i < stepNumber; i++) {
+                    document.getElementById(`step-${i}`).classList.add('completed');
+                }
+                
+                // Activate current step
+                document.getElementById(`step-${stepNumber}`).classList.add('active');
+                document.getElementById(`step-${stepNumber}-content`).classList.add('active');
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }
+            
+            // Step 1: Date and Service validation
+            document.getElementById('step-1-next').addEventListener('click', function() {
+                const button = this;
+                setLoading(button, true);
+                
+                clearErrors();
+                let isValid = true;
+                
+                // Validate date
+                if (!dateInput.value) {
+                    showError('date-error', 'Bitte wählen Sie ein Datum');
+                    isValid = false;
+                }
+                
+                // Validate service
+                const selectedServiceRadio = document.querySelector('input[name="service"]:checked');
+                if (!selectedServiceRadio) {
+                    showError('services-error', 'Bitte wählen Sie eine Dienstleistung');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Save data
+                    bookingData.date = dateInput.value;
+                    
+                    const selectedServiceOption = document.querySelector('.service-option.selected');
+                    const serviceName = selectedServiceOption.dataset.service;
+                    const serviceDuration = parseInt(selectedServiceOption.dataset.duration);
+                    const servicePrice = parseInt(selectedServiceOption.dataset.price);
+                    
+                    bookingData.services = [{
+                        name: serviceName,
+                        duration: serviceDuration,
+                        price: servicePrice
+                    }];
+                    
+                    // Load time slots
+                    loadTimeSlots(bookingData.date, serviceDuration)
+                        .then(() => {
+                            goToStep(2);
+                            setLoading(button, false);
+                        })
+                        .catch(error => {
+                            showErrorMessage('Fehler beim Laden der Verfügbarkeiten. Bitte versuchen Sie es später erneut.');
+                            console.error('Error loading time slots:', error);
+                            setLoading(button, false);
+                        });
+                } else {
+                    setLoading(button, false);
+                }
+            });
+            
+            // Load time slots from API
+            async function loadTimeSlots(date, duration) {
+                const timeSlotsContainer = document.getElementById('time-slots');
+                const loadingOverlay = timeSlotsContainer.querySelector('.loading-overlay');
+                
+                // Show loading
+                loadingOverlay.classList.add('visible');
+                timeSlotsContainer.innerHTML = '';
+                timeSlotsContainer.appendChild(loadingOverlay);
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/availability`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            date: date,
+                            duration: duration
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Hide loading
+                    loadingOverlay.classList.remove('visible');
+                    
+                    if (data.success && data.availableSlots && data.availableSlots.length > 0) {
+                        // Create time slot elements
+                        data.availableSlots.forEach(slot => {
+                            const timeSlot = document.createElement('div');
+                            timeSlot.className = 'time-slot';
+                            timeSlot.textContent = slot.startTime;
+                            timeSlot.dataset.startTime = slot.startTime;
+                            timeSlot.dataset.endTime = slot.endTime;
+                            
+                            timeSlot.addEventListener('click', function() {
+                                // Remove selected class from all time slots
+                                document.querySelectorAll('.time-slot').forEach(ts => ts.classList.remove('selected'));
+                                
+                                // Add selected class to clicked time slot
+                                this.classList.add('selected');
+                                
+                                // Store selected time
+                                bookingData.time = this.dataset.startTime;
+                            });
+                            
+                            timeSlotsContainer.appendChild(timeSlot);
+                        });
+                    } else {
+                        const noSlots = document.createElement('div');
+                        noSlots.className = 'message warning';
+                        noSlots.textContent = 'Keine Verfügbarkeiten für dieses Datum. Bitte wählen Sie ein anderes Datum.';
+                        timeSlotsContainer.innerHTML = '';
+                        timeSlotsContainer.appendChild(noSlots);
+                    }
+                } catch (error) {
+                    console.error('Error loading time slots:', error);
+                    loadingOverlay.classList.remove('visible');
+                    
+                    const errorElement = document.createElement('div');
+                    errorElement.className = 'message error-message';
+                    errorElement.textContent = 'Fehler beim Laden der Verfügbarkeiten. Bitte versuchen Sie es später erneut.';
+                    timeSlotsContainer.innerHTML = '';
+                    timeSlotsContainer.appendChild(errorElement);
+                }
+            }
+            
+            // Step 2 navigation
+            document.getElementById('step-2-prev').addEventListener('click', function() {
+                goToStep(1);
+            });
+            
+            document.getElementById('step-2-next').addEventListener('click', function() {
+                const button = this;
+                setLoading(button, true);
+                
+                clearErrors();
+                let isValid = true;
+                
+                // Validate time selection
+                const selectedTimeSlot = document.querySelector('.time-slot.selected');
+                if (!selectedTimeSlot) {
+                    showError('time-error', 'Bitte wählen Sie eine Uhrzeit');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    goToStep(3);
+                }
+                
+                setLoading(button, false);
+            });
+            
+            // Step 3 navigation
+            document.getElementById('step-3-prev').addEventListener('click', function() {
+                goToStep(2);
+            });
+            
+            document.getElementById('step-3-next').addEventListener('click', function() {
+                const button = this;
+                setLoading(button, true);
+                
+                clearErrors();
+                let isValid = true;
+                
+                // Validate name
+                if (!nameInput.value) {
+                    showError('name-error', 'Bitte geben Sie Ihren Namen ein');
+                    isValid = false;
+                }
+                
+                // Validate email
+                if (!emailInput.value || !isValidEmail(emailInput.value)) {
+                    showError('email-error', 'Bitte geben Sie eine gültige E-Mail-Adresse ein');
+                    isValid = false;
+                }
+                
+                // Validate phone
+                if (!phoneInput.value) {
+                    showError('phone-error', 'Bitte geben Sie Ihre Telefonnummer ein');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Save data
+                    bookingData.name = nameInput.value;
+                    bookingData.email = emailInput.value;
+                    bookingData.phone = phoneInput.value;
+                    bookingData.notes = notesTextarea.value;
+                    
+                    // Update booking summary
+                    updateBookingSummary();
+                    
+                    goToStep(4);
+                }
+                
+                setLoading(button, false);
+            });
+            
+            // Step 4 navigation
+            document.getElementById('step-4-prev').addEventListener('click', function() {
+                goToStep(3);
+            });
+            
+            // Update booking summary
+            function updateBookingSummary() {
+                const service = bookingData.services[0];
+                const selectedDate = new Date(bookingData.date);
+                const formattedDate = selectedDate.toLocaleDateString('de-DE', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                
+                bookingSummary.innerHTML = `
+                    <div class="message info">
+                        <p><strong>Datum:</strong> ${formattedDate}</p>
+                        <p><strong>Uhrzeit:</strong> ${bookingData.time} Uhr</p>
+                        <p><strong>Dienstleistung:</strong> ${service.name} (${service.duration} Min)</p>
+                        <p><strong>Preis:</strong> ${service.price} €</p>
+                        <hr>
+                        <p><strong>Name:</strong> ${bookingData.name}</p>
+                        <p><strong>E-Mail:</strong> ${bookingData.email}</p>
+                        <p><strong>Telefon:</strong> ${bookingData.phone}</p>
+                        ${bookingData.notes ? `<p><strong>Anmerkungen:</strong> ${bookingData.notes}</p>` : ''}
+                    </div>
+                `;
+            }
+            
+            // Book appointment
+            document.getElementById('book-appointment').addEventListener('click', function() {
+                const button = this;
+                setLoading(button, true);
+                
+                clearErrors();
+                let isValid = true;
+                
+                // Validate agreement
+                if (!agreedCheckbox.checked) {
+                    showError('agreed-error', 'Bitte stimmen Sie der Verarbeitung Ihrer Daten zu');
+                    isValid = false;
+                }
+                
+                if (isValid) {
+                    // Save agreement
+                    bookingData.agreed = agreedCheckbox.checked;
+                    
+                    // Send booking request
+                    fetch(`${API_BASE_URL}/api/book`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bookingData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        setLoading(button, false);
+                        
+                        if (data.success) {
+                            // Show success message
+                            successMessage.style.display = 'block';
+                            bookingProcess.style.display = 'none';
+                            
+                            // Update booking details
+                            const service = bookingData.services[0];
+                            const selectedDate = new Date(bookingData.date);
+                            const formattedDate = selectedDate.toLocaleDateString('de-DE', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric' 
+                            });
+                            
+                            bookingDetails.innerHTML = `
+                                <p><strong>Datum:</strong> ${formattedDate}</p>
+                                <p><strong>Uhrzeit:</strong> ${bookingData.time} Uhr</p>
+                                <p><strong>Dienstleistung:</strong> ${service.name} (${service.duration} Min)</p>
+                                <p><strong>Buchungs-ID:</strong> ${data.bookingId || 'N/A'}</p>
+                            `;
+                            
+                            // Scroll to top
+                            window.scrollTo(0, 0);
+                        } else {
+                            showErrorMessage(data.error || 'Fehler beim Buchen. Bitte versuchen Sie es später erneut.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error booking appointment:', error);
+                        setLoading(button, false);
+                        showErrorMessage('Fehler beim Buchen. Bitte versuchen Sie es später erneut.');
+                    });
+                } else {
+                    setLoading(button, false);
+                }
+            });
+            
+            // Helper functions
+            function clearErrors() {
+                document.querySelectorAll('.error').forEach(el => el.textContent = '');
+                errorMessage.style.display = 'none';
+                infoMessage.style.display = 'none';
+            }
+            
+            function showError(elementId, message) {
+                const errorElement = document.getElementById(elementId);
+                if (errorElement) {
+                    errorElement.textContent = message;
+                }
+            }
+            
+            function showErrorMessage(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                window.scrollTo(0, 0);
+            }
+            
+            function showInfoMessage(message) {
+                infoMessage.textContent = message;
+                infoMessage.style.display = 'block';
+                window.scrollTo(0, 0);
+            }
+            
+            function isValidEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            }
+            
+            function setLoading(button, isLoading) {
+                if (isLoading) {
+                    button.classList.add('loading');
+                    button.disabled = true;
+                } else {
+                    button.classList.remove('loading');
+                    button.disabled = false;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
