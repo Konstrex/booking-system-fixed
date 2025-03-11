@@ -1,0 +1,35 @@
+name = "booking-api"
+main = "src/index.js"
+compatibility_date = "2023-12-01"
+
+# Default environment variables
+[vars]
+BUSINESS_NAME = "Andriana Delcheva"
+BUSINESS_EMAIL = "contact@andrianadelcheva.com"
+EMAIL_FROM = "bookings@andrianadelcheva.com"
+MCP_ENABLED = "true"
+# Google Calendar service account credentials
+GOOGLE_CLIENT_EMAIL = "andrianadelcheva@totemic-point-453101-s4.iam.gserviceaccount.com"
+
+# Production environment configuration
+[env.production]
+routes = [
+  { pattern = "booking-api.konstantindelchevsw.workers.dev", custom_domain = false }
+]
+
+# These secrets need to be set using wrangler secret commands:
+# wrangler secret put MCP_SERVER_URL -e production
+# wrangler secret put MCP_API_KEY -e production
+# wrangler secret put GOOGLE_PRIVATE_KEY -e production
+# wrangler secret put GOOGLE_CALENDAR_ID -e production
+
+# Development environment configuration
+[env.dev]
+# Development variables can be less restrictive
+vars = { MCP_ENABLED = "false" }
+
+# Required sensitive variables that must be set in Cloudflare dashboard or via wrangler secrets
+# MCP_SERVER_URL = "https://your-mcp-server.com"
+# MCP_API_KEY = "your-mcp-api-key"
+# GOOGLE_CALENDAR_ID = "your-calendar-id@group.calendar.google.com"
+# GOOGLE_PRIVATE_KEY = "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
